@@ -6,30 +6,17 @@ const regd_users = express.Router();
 
 let users = [];
 
-const isValid = (username)=>{ 
-  let userAvailable = users.filter(user => user.username === username);
-  if (userAvailable.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
+
+
+const authenticatedUser = (username, password) => {
+  const user = users.find(user => user.username === username && user.password === password);
+  return !!user; // returns true if user exists with matching password
 };
 
-const authenticatedUser = (username,password)=>{ 
-  let validUser = users.filter(user => user.username === username);
-  if (validUser.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
-};
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
   const { username, password } = req.body;
-  if (!username || !password) {
-    res.status(400).json({message: "Invalid username or password"});
-  }
   if (authenticatedUser(username, password)) {
     //generate jwt access token
     let accessToken = jwt.sign({ data: username }, "access", {expiresIn: 3600});
@@ -45,12 +32,13 @@ regd_users.post("/login", (req,res) => {
 });
 
 // Add a book review
-regd_users.put("/auth/review/:isbn", (req, res) => {
+regd_users.put("/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   const review = req.body.review;
+  const username = req.session.authorization?.username;
   if (isbn) {
     let book = books[isbn];
-    let username = req.session.authorization.username;
+    let username = req.session.authorization?.username;
     //modify existing review by user
     if (book.reviews.hasOwnProperty(username)) {
       book.reviews[username].review = review;
@@ -70,11 +58,11 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
 });
 
 //delete existing review by user
-regd_users.delete("auth/riview/:isbn", (req, res) => {
+regd_users.delete("/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   if (isbn) {
     let book = books[isbn];
-    let username = req.session.authorization.username;
+    let username = req.session.authorization?.username;
     if (book.reviews.hasOwnProperty(username)) {
       delete book.reviews[username];
       res.status(200).json({ message: `Successfully deleted ${username} review` });
@@ -85,5 +73,4 @@ regd_users.delete("auth/riview/:isbn", (req, res) => {
 });
 
 module.exports.authenticated = regd_users;
-module.exports.isValid = isValid;
 module.exports.users = users;
