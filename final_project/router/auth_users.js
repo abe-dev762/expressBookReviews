@@ -7,7 +7,7 @@ const regd_users = express.Router();
 let users = [];
 
 
-
+//check users if authenticated
 const authenticatedUser = (username, password) => {
   const user = users.find(user => user.username === username && user.password === password);
   return !!user; // returns true if user exists with matching password
@@ -24,8 +24,7 @@ regd_users.post("/login", (req,res) => {
   req.session.authorization = {
     accessToken, username
   }
-  res.status(200);
-  res.send("User successfully logged in");
+  res.status(200).json({message: "Successfully logged in"});
   } else {
     res.status(400).json({message: "Invalid username or password"});
   }
